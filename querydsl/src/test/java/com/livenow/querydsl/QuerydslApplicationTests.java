@@ -1,9 +1,8 @@
 package com.livenow.querydsl;
 
-import com.livenow.querydsl.entity.Hello;
-import com.livenow.querydsl.entity.QHello;
+import com.livenow.querydsl.domain.Hello;
+import com.livenow.querydsl.domain.QHello;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

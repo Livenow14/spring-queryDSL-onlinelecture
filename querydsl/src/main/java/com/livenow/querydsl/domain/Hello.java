@@ -1,4 +1,4 @@
-package com.livenow.querydsl.entity;
+package com.livenow.querydsl.domain;
 
 import lombok.Getter;
 
