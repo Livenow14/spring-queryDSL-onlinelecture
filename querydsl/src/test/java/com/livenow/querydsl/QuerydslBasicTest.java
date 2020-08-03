@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 
+import static com.livenow.querydsl.domain.QMember.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
@@ -101,6 +102,25 @@ public class QuerydslBasicTest {
                 .where(m.usernameee.eq("member1"))    // 파라미터 바인딩 없이 prepare statment로 파라미터 바인딩 해줌
                 .fetchOne();
         assertThat(findMember.getUsername()).isEqualTo("member1");*/
+
+    }
+    @Test
+    public void Querydsltype(){
+
+        /**
+         *  static import로 QMember를 넣었다.
+         *  웬만하면 이렇게 하자 !
+         *
+         *  같은 테이블을 조인하는 경우에는
+         *  new QMember("member2"); 이런식으로 다시 만들어주자
+         *  이런 경우는 거의 없다.
+         */
+        Member findMember = jpaQueryFactory
+                .select(member)
+                .from(member)
+                .where(member.username.eq("member1"))    // 파라미터 바인딩 없이 prepare statment로 파라미터 바인딩 해줌
+                .fetchOne();
+        assertThat(findMember.getUsername()).isEqualTo("member1");
 
     }
 
