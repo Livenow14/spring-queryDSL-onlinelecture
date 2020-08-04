@@ -4,6 +4,7 @@ package com.livenow.querydsl;
 import com.livenow.querydsl.domain.Member;
 import com.livenow.querydsl.domain.QMember;
 import com.livenow.querydsl.domain.Team;
+import com.querydsl.core.QueryResults;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,9 +15,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
-import javax.persistence.TypedQuery;
+
+import java.util.List;
 
 import static com.livenow.querydsl.domain.QMember.*;
+import static com.livenow.querydsl.domain.QMember.member;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
@@ -134,7 +137,8 @@ public class QuerydslBasicTest {
      * member.age.in(10, 20) // age in (10,20)
      * member.age.notIn(10, 20) // age not in (10, 20)
      * member.age.between(10,30) //between 10, 30
-     * member.age.goe(30) // age >= 30member.age.gt(30) // age > 30
+     * member.age.goe(30) // age >= 30
+     * member.age.gt(30) // age > 30
      * member.age.loe(30) // age <= 30
      * member.age.lt(30) // age < 30
      * member.username.like("member%") //like 검색
@@ -158,7 +162,7 @@ public class QuerydslBasicTest {
 
     /**
      * and의 경우 쉼표로 해결가능
-     * null을 넣을 수 있기 때문에 동적쿼리에서 기가 막히다. 
+     * null을 넣을 수 있기 때문에 동적쿼리에서 기가 막히다.
      */
     @DisplayName("and 파라미터 ")
     @Test
@@ -173,6 +177,55 @@ public class QuerydslBasicTest {
 
         //then
         assertThat(findMember.getUsername()).isEqualTo("member1");
+    }
+
+    /**
+     * 결과 조회
+     * fetch() : 리스트 조회, 데이터 없으면 빈 리스트 반환
+     * fetchOne() : 단 건 조회
+     * 결과가 없으면 : null
+     * 결과가 둘 이상이면 : com.querydsl.core.NonUniqueResultException
+     * fetchFirst() : limit(1).fetchOne()
+     *
+     * fetchResults() : 페이징 정보 포함, total count 쿼리 추가 실행/ 복잡하고 성능이 중요할때는 이거 쓰면 안되고 쿼리문 두번 써야함
+     * fetchCount() : count 쿼리로 변경해서 count 수 조회
+     */
+
+    @DisplayName("결과 조회 테스트")
+    @Test
+    public void resultFetch(){
+/*
+        //given
+        List<Member> fetch = jpaQueryFactory
+                .selectFrom(member)
+                .fetch();
+
+        Member fetchOne = jpaQueryFactory
+                .selectFrom(member)
+                .fetchOne();
+
+        Member fetchFirst = jpaQueryFactory
+                .selectFrom(QMember.member)
+                .fetchFirst();
+*/
+
+        /**
+         * 페이징용 쿼리 
+         */
+        QueryResults<Member> memberQueryResults = jpaQueryFactory
+                .selectFrom(member)
+                .fetchResults();
+        memberQueryResults.getTotal();
+        memberQueryResults.getResults();
+
+        long total = jpaQueryFactory
+                .selectFrom(member)
+                .fetchCount();
+
+
+        //when
+
+        //then
     }
 
 }
