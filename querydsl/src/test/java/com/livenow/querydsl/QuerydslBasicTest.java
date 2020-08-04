@@ -124,4 +124,55 @@ public class QuerydslBasicTest {
 
     }
 
+
+    /**
+     * jpql의 모든 검색조건 제공
+     * member.username.eq("member1") // username = 'member1'
+     * member.username.ne("member1") //username != 'member1'
+     * member.username.eq("member1").not() // username != 'member1'
+     * member.username.isNotNull() //이름이 is not null
+     * member.age.in(10, 20) // age in (10,20)
+     * member.age.notIn(10, 20) // age not in (10, 20)
+     * member.age.between(10,30) //between 10, 30
+     * member.age.goe(30) // age >= 30member.age.gt(30) // age > 30
+     * member.age.loe(30) // age <= 30
+     * member.age.lt(30) // age < 30
+     * member.username.like("member%") //like 검색
+     * member.username.contains("member") // like ‘%member%’ 검색
+     * member.username.startsWith("member") //like ‘member%’ 검색
+     */
+    @DisplayName("검색조건 쿼리 ")
+    @Test
+    public void search() throws Exception{
+        //given
+        Member findMember = jpaQueryFactory
+                .selectFrom(member)
+                .where(member.username.eq("member1")
+                        .and(member.age.eq(10)))
+                .fetchOne();
+        //when
+
+        //then
+        assertThat(findMember.getUsername()).isEqualTo("member1");
+    }
+
+    /**
+     * and의 경우 쉼표로 해결가능
+     * null을 넣을 수 있기 때문에 동적쿼리에서 기가 막히다. 
+     */
+    @DisplayName("and 파라미터 ")
+    @Test
+    public void searchAndParam() throws Exception{
+        //given
+        Member findMember = jpaQueryFactory
+                .selectFrom(member)
+                .where(member.username.eq("member1")
+                        ,member.age.eq(10))
+                .fetchOne();
+        //when
+
+        //then
+        assertThat(findMember.getUsername()).isEqualTo("member1");
+    }
+
 }
