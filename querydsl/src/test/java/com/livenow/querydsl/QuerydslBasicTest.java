@@ -6,7 +6,6 @@ import com.livenow.querydsl.domain.QMember;
 import com.livenow.querydsl.domain.Team;
 import com.querydsl.core.QueryResults;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,7 +17,6 @@ import javax.persistence.EntityManager;
 
 import java.util.List;
 
-import static com.livenow.querydsl.domain.QMember.*;
 import static com.livenow.querydsl.domain.QMember.member;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -29,16 +27,16 @@ public class QuerydslBasicTest {
     @Autowired
     EntityManager em;
 
-    JPAQueryFactory jpaQueryFactory;
+    JPAQueryFactory queryFactory;
 
 
     @BeforeEach
     public void before(){
-        jpaQueryFactory = new JPAQueryFactory(em);
+        queryFactory = new JPAQueryFactory(em);
         //given
         Team teamA = Team.builder().name("teamA").build();
         Team teamB = Team.builder().name("teamB").build();
-
+        
         Member member1 = Member.builder().username("member1").age(10).team(teamA).build();
         Member member2 = Member.builder().username("member2").age(10).team(teamA).build();
         Member member3 = Member.builder().username("member3").age(10).team(teamB).build();
@@ -47,8 +45,8 @@ public class QuerydslBasicTest {
 /*        em.persist(member1);
         em.persist(member2);
         em.persist(member3);
-        em.persist(member4);*/ //cascade options을 team에다 둠 
-
+        em.persist(member4);*/ //cascade options을 team에다 둠
+        
         em.persist(teamA);
         em.persist(teamB);
 
@@ -89,7 +87,7 @@ public class QuerydslBasicTest {
 
         QMember m = new QMember("m");
 
-        Member findMember = jpaQueryFactory
+        Member findMember = queryFactory
                 .select(m)
                 .from(m)
                 .where(m.username.eq("member1"))    // 파라미터 바인딩 없이 prepare statment로 파라미터 바인딩 해줌
@@ -118,7 +116,7 @@ public class QuerydslBasicTest {
          *  new QMember("member2"); 이런식으로 다시 만들어주자
          *  이런 경우는 거의 없다.
          */
-        Member findMember = jpaQueryFactory
+        Member findMember = queryFactory
                 .select(member)
                 .from(member)
                 .where(member.username.eq("member1"))    // 파라미터 바인딩 없이 prepare statment로 파라미터 바인딩 해줌
@@ -149,7 +147,7 @@ public class QuerydslBasicTest {
     @Test
     public void search() throws Exception{
         //given
-        Member findMember = jpaQueryFactory
+        Member findMember = queryFactory
                 .selectFrom(member)
                 .where(member.username.eq("member1")
                         .and(member.age.eq(10)))
@@ -168,7 +166,7 @@ public class QuerydslBasicTest {
     @Test
     public void searchAndParam() throws Exception{
         //given
-        Member findMember = jpaQueryFactory
+        Member findMember = queryFactory
                 .selectFrom(member)
                 .where(member.username.eq("member1")
                         ,member.age.eq(10))
@@ -212,13 +210,13 @@ public class QuerydslBasicTest {
         /**
          * 페이징용 쿼리 
          */
-        QueryResults<Member> memberQueryResults = jpaQueryFactory
+        QueryResults<Member> memberQueryResults = queryFactory
                 .selectFrom(member)
                 .fetchResults();
         memberQueryResults.getTotal();
         memberQueryResults.getResults();
 
-        long total = jpaQueryFactory
+        long total = queryFactory
                 .selectFrom(member)
                 .fetchCount();
 
@@ -245,7 +243,7 @@ public class QuerydslBasicTest {
         em.persist(new Member("member6", 100));
 
         //when
-        List<Member> result = jpaQueryFactory
+        List<Member> result = queryFactory
                 .selectFrom(member)
                 .where(member.age.eq(100))
                 .orderBy(member.age.desc(), member.username.asc().nullsLast())
@@ -260,6 +258,42 @@ public class QuerydslBasicTest {
         assertThat(member6.getUsername()).isEqualTo("member6");
         assertThat(memberNull.getUsername()).isNull();
 
+    }
+
+    @DisplayName("페이징")
+    @Test
+    public void paging1() throws Exception{
+        //given
+        List<Member> result = queryFactory
+                .selectFrom(member)
+                .orderBy(member.username.desc())
+                .offset(1)
+                .limit(2)
+                .fetch();
+
+        //when
+
+        //then
+        assertThat(result.size()).isEqualTo(2);
+    }
+
+    @DisplayName("페이징2")
+    @Test
+    public void paging2() throws Exception{
+        //given
+        QueryResults<Member> queryResults = queryFactory
+                .selectFrom(member)
+                .orderBy(member.username.desc())
+                .offset(1)
+                .limit(2)
+                .fetchResults();
+
+        //then
+        assertThat(queryResults.getTotal()).isEqualTo(4);
+        assertThat(queryResults.getLimit()).isEqualTo(2);
+        assertThat(queryResults.getOffset()).isEqualTo(1);
+
+        assertThat(queryResults.getResults().size()).isEqualTo(2);
     }
 
 }
