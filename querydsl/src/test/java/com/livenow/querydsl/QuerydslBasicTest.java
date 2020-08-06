@@ -16,6 +16,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.PersistenceUnit;
 
 import java.util.List;
 
@@ -408,4 +410,96 @@ public class QuerydslBasicTest {
                 .containsExactly("teamA","teamB");
     }
 
+    /**
+     * on절을 활용한 조인
+     * 1. 조인 대상 필터링
+     * 2. 연관관계 없는 엔티티 외부 조인
+     * 예) 회원과 팀을 조인하면서, 팀 이름이 teamA인 팀만 조인, 회원은 모두 조회
+     * JPQL: select m, t from Member m left join m.team t on t.name = 'teamA;
+     */
+    @DisplayName("on절 필터링 ")
+    @Test
+    public void join_on_filtering() throws Exception{
+        //given
+        List<Tuple> result = queryFactory
+                .select(member, team)
+                .from(member)
+                .leftJoin(member.team, team).on(team.name.eq("teamA"))
+                .fetch();
+        //when
+        for (Tuple tuple : result) {
+            System.out.println("tuple1 = " + tuple);
+        }
+
+        /**
+         * 외부조인은 대상이 아닌 것도 가져오지만
+         * 그냥 join을 하게되면 대상이 내부이기 때문에 teamA인것만 가져옴
+         *  on 절을 활용해 조인 대상을 필터링 할 때, 외부조인이 아니라 내부조인(inner join)을 사용하면,
+         * where 절에서 필터링 하는 것과 기능이 동일하다. 따라서 on 절을 활용한 조인 대상 필터링을 사용할 때,
+         * 내부조인 이면 익숙한 where 절로 해결하고, 정말 외부조인이 필요한 경우에만 이 기능을 사용하자.
+         */
+        //given
+        List<Tuple> result2 = queryFactory
+                .select(member, team)
+                .from(member)
+                .join(member.team, team).on(team.name.eq("teamA"))
+                .fetch();
+
+        List<Tuple> result3 = queryFactory
+                .select(member, team)
+                .from(member)
+                .join(member.team, team)
+                .where(team.name.eq("teamA"))
+                .fetch();
+        //when
+        for (Tuple tuple : result2) {
+            System.out.println("tuple2 = " + tuple);
+        }
+        for (Tuple tuple : result3) {
+            System.out.println("tuple3 = " + tuple);
+        }
+    }
+
+    /**
+     * 연관관계 없는 엔티티 외부 조인
+     * 회원의 이름이 팀 이름과 같은 대상 외부 조인
+     *
+     */
+    @Test
+    public void join_on_no_relation() throws Exception{
+        //given
+        em.persist(Member.builder().username("teamA").build());
+        em.persist(Member.builder().username("teamB").build());
+
+        /**
+         * 막 조인을 할것이라서 leftJoni에서 그냥 team 이 들어감감
+         * 다 나오지만 버의 이름과 팀의 이름이 같은경우만 조인되서 팀을 가져옴
+         *
+         * 하이버네이트 5.1부터 on 을 사용해서 서로 관계가 없는 필드로 외부 조인하는 기능이 추가되었다. 물론 내
+         * 부 조인도 가능하다.
+         * 주의! 문법을 잘 봐야 한다. leftJoin() 부분에 일반 조인과 다르게 엔티티 하나만 들어간다.
+         * 일반조인: leftJoin(member.team, team)
+         * on조인: from(member).leftJoin(team).on(xxx)
+        */
+
+        //when
+        List<Tuple> fetch = queryFactory
+                .select(member, team)
+                .from(member)
+                .leftJoin(team).on(member.username.eq(team.name))
+                .fetch();
+        //then
+        for (Tuple tuple : fetch) {
+            System.out.println("tuple = " + tuple);
+        }
+
+        List<Member> fetch1 = queryFactory
+                .select(member)
+                .from(member)
+                .join(team).on(member.username.eq(team.name))
+                .fetch();
+        for (Member member1 : fetch1) {
+            System.out.println("member1 = " + member1.getUsername());
+        }
+    }
 }
