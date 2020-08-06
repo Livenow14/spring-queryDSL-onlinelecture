@@ -21,6 +21,7 @@ import java.util.List;
 
 import static com.livenow.querydsl.domain.QMember.member;
 import static com.livenow.querydsl.domain.QTeam.*;
+import static org.assertj.core.api.Assertions.as;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
@@ -352,6 +353,59 @@ public class QuerydslBasicTest {
 
         assertThat(teamB.get(team.name)).isEqualTo("teamB");
         assertThat(teamB.get(member.age.avg())).isEqualTo(35);
+    }
+
+    @DisplayName("기본조인")
+    @Test
+    public void join() throws Exception{
+        //given
+        List<Member> result = queryFactory
+                .selectFrom(member)
+                .join(member.team, team)
+                .where(team.name.eq("teamA"))
+                .fetch();
+        //when
+        assertThat(result)
+                .extracting("username")
+                .containsExactly("member1", "member2");
+
+
+        List<Member> leftJoin = queryFactory
+                .selectFrom(member)
+                .leftJoin(member.team, team)
+                .where(team.name.eq("teamA"))
+                .fetch();
+
+        assertThat(leftJoin)
+                .extracting("username")
+                .containsExactly("member1", "member2");
+
+
+    }
+
+    /**
+     * 연관관계가 없는경우 세타조인
+     * 회원의 이름이 팀 이름과 같은 회원 조회
+     * 외부 조인 불가능 -> on절을 사용하면 가능
+     * 성능 최적화는 알아서 해줌
+     */
+    @DisplayName("세타 조인")
+    @Test
+    public void theta_join() throws Exception{
+        //given
+        em.persist(Member.builder().username("teamA").build());
+        em.persist(Member.builder().username("teamB").build());
+
+        //when
+        List<Member> result = queryFactory
+                .select(member)
+                .from(member, team)
+                .where(member.username.eq(team.name))
+                .fetch();
+        //then
+        assertThat(result)
+                .extracting("username")
+                .containsExactly("teamA","teamB");
     }
 
 }
