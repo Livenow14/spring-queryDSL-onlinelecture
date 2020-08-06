@@ -19,7 +19,7 @@ public class Team {
 
     private String name;
 
-    @OneToMany(mappedBy = "team")
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "team")
     private List<Member> members = new ArrayList<>();
 
     @Builder
