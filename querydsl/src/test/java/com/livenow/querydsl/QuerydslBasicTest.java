@@ -1,12 +1,14 @@
 package com.livenow.querydsl;
 
 
+import com.fasterxml.jackson.databind.deser.std.StdKeyDeserializer;
 import com.livenow.querydsl.domain.Member;
 import com.livenow.querydsl.domain.QMember;
 import com.livenow.querydsl.domain.QTeam;
 import com.livenow.querydsl.domain.Team;
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
+import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.junit.jupiter.api.BeforeEach;
@@ -631,6 +633,47 @@ public class QuerydslBasicTest {
      *
      *  sql antiPatterns책을 보자
      */
+
+    /**
+     * Case 문
+     */
+
+    @Test
+    public void basicCase(){
+        List<String> reulst = queryFactory
+                .select(member.age
+                        .when(10).then("열살")
+                        .when(20).then("스무살")
+                        .otherwise("기타"))
+                .from(member)
+                .fetch();
+        for (String s : reulst) {
+            System.out.println("s = " + s);
+        }
+    }
+
+    /**
+     * 복잡한 case
+     * 왠만하면 db는 데이터를 필터링과 그룹화만 하고
+     * 실제 전화하고 바꾸고 하는것은 db에서 하는 건 아니다.
+     *
+     * DB에선 필요한 기능이 아님.. 명심!
+     */
+    @Test
+    public void complexCase(){
+        List<String> result = queryFactory
+                .select(new CaseBuilder()
+                        .when(member.age.between(0, 20)).then("0~20살")
+                        .when(member.age.between(21, 30)).then("21살~30살")
+                        .otherwise("기타"))
+                .from(member)
+                .fetch();
+
+        for (String s : result) {
+            System.out.println("s = " + s);
+        }
+
+    }
 
 
 }
