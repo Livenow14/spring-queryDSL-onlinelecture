@@ -7,6 +7,7 @@ import com.livenow.querydsl.domain.QTeam;
 import com.livenow.querydsl.domain.Team;
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -23,6 +24,7 @@ import java.util.List;
 
 import static com.livenow.querydsl.domain.QMember.member;
 import static com.livenow.querydsl.domain.QTeam.*;
+import static com.querydsl.jpa.JPAExpressions.*;
 import static org.assertj.core.api.Assertions.as;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -528,7 +530,107 @@ public class QuerydslBasicTest {
         //로딩된 데이터인지, 아직 초기화가 안된 데이터인지 알려줌
         boolean loaded = emf.getPersistenceUnitUtil().isLoaded(findMember.getTeam());
         assertThat(loaded).as("패치조인 미적용").isTrue();
-
     }
+    /**
+     * 서브쿼리
+     * com.querydsl.jpa.JPAExpressions 시용
+     * 나이가 가장 많은 회원 조회
+     */
+    @Test
+    public void subQuery() throws Exception {
+        QMember memberSub = new QMember("memberSub");
+        List<Member> result = queryFactory
+                .selectFrom(member)
+                .where(member.age.eq(
+                        select(memberSub.age.max())
+                                .from(memberSub)
+                ))
+                .fetch();
+
+        assertThat(result).extracting("age")    //나이 필드를 꺼냄
+                .containsExactly(40);
+    }
+
+     /**
+     * 나이가 평균 이상인 회원 조회
+     */
+    @Test
+    public void subQueryAvg() throws Exception {
+        QMember memberSub = new QMember("memberSub");
+        List<Member> result = queryFactory
+                .selectFrom(member)
+                .where(member.age.gt(
+                        select(memberSub.age.avg())
+                                .from(memberSub)
+                ))
+                .fetch();
+
+        assertThat(result).extracting("age")    //나이 필드를 꺼냄
+                .containsExactly(30, 40);
+    }
+
+    /**
+     * In 쿼리
+     * In이 처리되는걸 본다.
+     * 억지성 예제이다.
+     */
+    @Test
+    public void subQueryIn() throws Exception {
+        QMember memberSub = new QMember("memberSub");
+        List<Member> result = queryFactory
+                .selectFrom(member)
+                .where(member.age.in(
+                        select(memberSub.age)
+                                .from(memberSub)
+                                .where(memberSub.age.gt(10))
+                ))
+                .fetch();
+
+        assertThat(result).extracting("age")    //나이 필드를 꺼냄
+                .containsExactly(20, 30, 40);
+    }
+
+    /**
+     * select 서브쿼리
+     * 멤버들의 이름과 평균 나이를 보여주자
+     * JPAExpressions는 static import가 가능함.
+     */
+    @Test
+    public void subQuerySelect() throws Exception {
+        QMember memberSub = new QMember("memberSub");
+        List<Tuple> fetch = queryFactory
+                .select(member.username,
+                        select(memberSub.age.avg())
+                                .from(memberSub)
+                )
+                .from(member)
+                .fetch();
+        for (Tuple tuple : fetch) {
+            System.out.println("tuple = " + tuple);
+        }
+    }
+
+    /**
+     * from 절의 서브쿼리 한계
+     * JPA JPQL 서브쿼리의 한계점으로 from 절의 서브쿼리(인라인 뷰)는 지원하지 않는다. 당연히 Querydsl
+     * 도 지원하지 않는다. 하이버네이트 구현체를 사용하면 select 절의 서브쿼리는 지원한다. Querydsl도 하
+     * 이버네이트 구현체를 사용하면 select 절의 서브쿼리를 지원한다
+     *
+     * from 절의 서브쿼리 해결방안
+     * 1. 서브쿼리를 join으로 변경한다. (가능한 상황도 있고, 불가능한 상황도 있다.)
+     * 2. 애플리케이션에서 쿼리를 2번 분리해서 실행한다.
+     * 3. nativeSQL을 사용한다.
+     *
+     * from 절에서 서브쿼리를 쓰는 많은 이유
+     *  DB를 어떻게든 화면에 맞추려고 하니까 그렇다.
+     *  sql을 잘못 쓰는 방향이다.
+     *
+     *  해결방안
+     *  db는 데이터만 가져오는것
+     *  그거에 대한 조작은 서비스단에서 하는 것이다
+     *
+     *  sql antiPatterns책을 보자
+     */
+
 
 }
