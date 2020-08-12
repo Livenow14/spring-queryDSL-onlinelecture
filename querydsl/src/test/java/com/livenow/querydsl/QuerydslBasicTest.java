@@ -9,6 +9,7 @@ import com.livenow.querydsl.dto.MemberDto;
 import com.livenow.querydsl.dto.MemberDtoQueryProjection;
 import com.livenow.querydsl.dto.QMemberDtoQueryProjection;
 import com.livenow.querydsl.dto.UserDto;
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.ExpressionUtils;
@@ -921,5 +922,38 @@ public class QuerydslBasicTest {
      *  .fetch();
      *   참고: distinct는 JPQL의 distinct와 같다.
      */
+
+    /**
+     * 동적 쿼리 - BooleanBuilder
+     */
+    @Test
+    public void dynamicQuery_BooleanBuilder() {
+        String usernameParam = "member1";
+        Integer ageParam = null;
+
+        List<Member> result = serachMember1(usernameParam, ageParam);
+        assertThat(result.size()).isEqualTo(1);
+
+    }
+
+    /**
+     * 하나가 null 이면 null인 부분 검색을 안함, 동적 쿼리이기 떄문에
+     */
+    private List<Member> serachMember1(String usernameCond, Integer ageCond) {
+
+        BooleanBuilder builder = new BooleanBuilder();
+        if(usernameCond !=null){
+            builder.and(member.username.eq(usernameCond));
+        }
+
+        if(ageCond != null){
+            builder.and(member.age.eq(ageCond));
+        }
+
+        return queryFactory
+                .selectFrom(member)
+                .where(builder)
+                .fetch();
+    }
 
 }
