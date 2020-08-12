@@ -1050,4 +1050,38 @@ public class QuerydslBasicTest {
                 .where(member.age.gt(18))
                 .execute();
     }
+
+    /**
+     * SQL function 호출하기
+     * SQL function은 JPA와 같이 Dialect에 등록된 내용만 호출할 수 있다.
+     * 현재는 H2Dialect ( Ctrl + N 으로 검색하면 나옴 )
+     * M으로 다 바꾸기
+     */
+    @Test
+    public void sqlFunction() {
+        List<String> result = queryFactory
+                .select(Expressions.stringTemplate("function('replace', {0}, {1}, {2})",
+                        member.username, "member", "M"))
+                .from(member)
+                .fetch();
+        System.out.println("result = " + result);
+    }
+
+    /**
+     * 소문자로 바꿔보기
+     * 별로인 예제이다
+     * 쿼리문만 보자
+     */
+    @Test
+    public void sqlFunction2(){
+        List<String> result = queryFactory
+                .select(member.username)
+                .from(member)
+                /*.where(member.username.eq(
+                        Expressions.stringTemplate("function('lower', {0})", member.username)))*/
+                .where(member.username.eq(member.username.lower()))
+                .fetch();
+        System.out.println("result = " + result);
+    }
+
 }
