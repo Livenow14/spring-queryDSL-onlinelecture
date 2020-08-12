@@ -1,15 +1,13 @@
 package com.livenow.querydsl.domain;
 
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.persistence.*;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@ToString(of = {"id", "username", "age"})
 public class Member {
 
     @Id @GeneratedValue

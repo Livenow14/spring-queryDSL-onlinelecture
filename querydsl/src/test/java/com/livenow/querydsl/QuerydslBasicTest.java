@@ -25,6 +25,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.Commit;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
@@ -997,5 +998,56 @@ public class QuerydslBasicTest {
     // null 체크는 주의해서 해줘야함
     private BooleanExpression allEq(String usernameCond, Integer ageCond){
         return usernameEq(usernameCond).and(ageEq(ageCond));
+    }
+
+    /**
+     * 수정, 삭제 벌크연산
+     */
+    @Test
+    public void bulkUpdate(){
+
+        //member1 = 10 -> 유지
+        //member2 = 20 -> 유지
+        //member3 = 30 -> 유지
+        //member4 = 40 -> 유지
+
+        long count = queryFactory
+                .update(member)
+                .set(member.username, "비회원")
+                .where(member.age.lt(28))
+                .execute();
+
+        //벌크성 연산은 바로 DB를 건드리기 때문에
+        // 영속성 컨텍스트를 한번 초기화 해줘야함
+        em.flush();
+        em.clear();
+        //member1 = 10 -> 비회원
+        //member2 = 20 -> 비회원
+        //member3 = 30 -> 유지
+        //member4 = 40 -> 유지
+
+        List<Member> result = queryFactory
+                .selectFrom(member)
+                .fetch();
+
+        for (Member fetch1 : result) {
+            System.out.println("fetch1 = " + fetch1);
+        }
+    }
+
+    @Test
+    public void bulkAdd(){
+        long execute = queryFactory
+                .update(member)
+                .set(member.age, member.age.add(-1))    //마이너스는 이렇게
+                .execute();
+    }
+
+    @Test
+    public void bulkDelete(){
+        long execute = queryFactory
+                .delete(member)
+                .where(member.age.gt(18))
+                .execute();
     }
 }
