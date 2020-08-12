@@ -6,6 +6,8 @@ import com.livenow.querydsl.domain.Member;
 import com.livenow.querydsl.domain.QMember;
 import com.livenow.querydsl.domain.Team;
 import com.livenow.querydsl.dto.MemberDto;
+import com.livenow.querydsl.dto.MemberDtoQueryProjection;
+import com.livenow.querydsl.dto.QMemberDtoQueryProjection;
 import com.livenow.querydsl.dto.UserDto;
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
@@ -883,5 +885,41 @@ public class QuerydslBasicTest {
             System.out.println("memberDto = " + userDto);
         }
     }
+
+    /**
+     * @QueryProjection
+     * 생성자 + @QueryProjection
+     * 위의 생성자에선 컴파일시에 에러가 나옴
+     * 밑의 것은 바로 에러를 띄어줌
+     *
+     * 단점
+     * - Q파일을 만들어 줘야하는것
+     * - 의존관계의 문제
+     *  MemberDto자체가 QueryDsl의 영향을 받게됨
+     *  이는 결합적인 측면에서 추가가 되는 것이라 좋지않음
+     *
+     *  DTO에 QueryDSL 어노테
+     * 이션을 유지해야 하는 점과 DTO까지 Q 파일을 생성해야 하는 단점이 있다.
+     *
+     * 많이 쓰이고 영향이 적으면 정말 좋은 방법
+     */
+    @Test
+    public void findDtoByQueryProjection(){
+        List<MemberDtoQueryProjection> fetch = queryFactory
+                .select(new QMemberDtoQueryProjection(member.username, member.age))
+                .from(member)
+                .fetch();
+        for (MemberDtoQueryProjection memberDtoQueryProjection : fetch) {
+            System.out.println("memberDtoQueryProjection = " + memberDtoQueryProjection);
+        }
+    }
+
+    /**
+     * distinct
+     * List<String> result = queryFactory
+     *  .select(member.username).distinct() .from(member)
+     *  .fetch();
+     *   참고: distinct는 JPQL의 distinct와 같다.
+     */
 
 }
