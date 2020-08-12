@@ -4,13 +4,11 @@ package com.livenow.querydsl;
 import com.fasterxml.jackson.databind.deser.std.StdKeyDeserializer;
 import com.livenow.querydsl.domain.Member;
 import com.livenow.querydsl.domain.QMember;
-import com.livenow.querydsl.domain.QTeam;
 import com.livenow.querydsl.domain.Team;
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.Expressions;
-import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -28,7 +26,6 @@ import java.util.List;
 import static com.livenow.querydsl.domain.QMember.member;
 import static com.livenow.querydsl.domain.QTeam.*;
 import static com.querydsl.jpa.JPAExpressions.*;
-import static org.assertj.core.api.Assertions.as;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
@@ -708,4 +705,61 @@ public class QuerydslBasicTest {
             System.out.println("s = " + s);
         }
     }
+
+    /**
+     * 프로젝션
+     * 프로젝션: select 대상 지정
+     */
+
+    /**
+     * 프로젝션 대상이 하나
+     */
+    @Test
+    public void simpleProjection() {
+        List<String> result = queryFactory
+                .select(member.username)
+                .from(member)
+                .fetch();
+        for (String s : result) {
+            System.out.println("s = " + s);
+        }
+
+        List<Member> result2 = queryFactory
+                .select(member)
+                .from(member)
+                .fetch();
+        for (Member member1 : result2) {
+            System.out.println("member1 = " + member1);
+        }
+    }
+
+    /**
+     * 튜플 프로젝션
+     * 이것은, 레포지토리 단에서 써야한다.
+     * package com.querydsl.core;
+     * 의 패키지 안에서 있기때문에
+     *
+     * 밖에서 던질 땐 DTO로 바꿔서 함
+     *
+     */
+    @Test
+    public void tupleProjection(){
+        List<Tuple> result = queryFactory
+                .select(member.username, member.age)
+                .from(member)
+                .fetch();
+
+        for (Tuple tuple : result) {
+            String username = tuple.get(member.username);
+            Integer age = tuple.get(member.age);
+            System.out.println("username = " + username);
+            System.out.println("age = " + age);
+        }
+    }
+
+
+
+
+
+
 }
