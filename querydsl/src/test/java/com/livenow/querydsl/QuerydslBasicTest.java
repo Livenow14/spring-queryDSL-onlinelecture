@@ -971,7 +971,7 @@ public class QuerydslBasicTest {
         /**
          * where 에서 null이면 무시를 한다.
          */
-        List<Member> result = serachMember1(usernameParam, ageParam);
+        List<Member> result = serachMember2(usernameParam, ageParam);
         assertThat(result.size()).isEqualTo(1);
     }
     private List<Member> serachMember2(String usernameCond, Integer ageCond) {
