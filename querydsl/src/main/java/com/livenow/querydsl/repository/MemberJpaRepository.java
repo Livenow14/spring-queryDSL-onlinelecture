@@ -5,6 +5,8 @@ import com.livenow.querydsl.dto.MemberSearchCondition;
 import com.livenow.querydsl.dto.MemberTeamDto;
 import com.livenow.querydsl.dto.QMemberTeamDto;
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.Predicate;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
@@ -106,5 +108,69 @@ public class MemberJpaRepository {
                 .fetch();
     }
 
+   public  List<MemberTeamDto> search(MemberSearchCondition condition){
+        return queryFactory
+                .select(new QMemberTeamDto(
+                        member.id.as("memberId"),
+                        member.username,
+                        member.age,
+                        team.id.as("teamId"),
+                        team.name.as("teamName")
+                ))
+                .from(member)
+                .leftJoin(member.team, team)
+                .where(usernameEq(condition.getUsername()),
+                        teamNameEq(condition.getTeamName()),
+                        ageGoe(condition.getAgeGoe()),
+                        ageLoe(condition.getAgeLoe()))
+                .fetch();
+    }
 
+    /**
+     * queryDsl 의 BooleanExpression이니 헷갈리지 말기
+     */
+    private BooleanExpression usernameEq(String username) {
+        return StringUtils.hasText(username) ? member.username.eq(username) : null;
+    }
+
+    private BooleanExpression teamNameEq(String teamName) {
+        return StringUtils.hasText(teamName) ? team.name.eq(teamName): null;
+    }
+
+    private BooleanExpression ageGoe(Integer ageGoe) {
+        return ageGoe != null ? member.age.goe(ageGoe) : null;
+    }
+
+
+    private BooleanExpression ageLoe(Integer ageLoe) {
+        return ageLoe != null ? member.age.loe(ageLoe) : null;
+    }
+
+
+    /**
+     * 이렇게 메서드를 재사용할 수 있다는 장점이있다.
+     */
+    public  List<Member> searchMember(MemberSearchCondition condition){
+        return queryFactory
+                .selectFrom(member)
+                .from(member)
+                .leftJoin(member.team, team)
+                .where(usernameEq(condition.getUsername()),
+                        teamNameEq(condition.getTeamName()),
+                        ageGoe(condition.getAgeGoe()),
+                        ageLoe(condition.getAgeLoe()))
+                .fetch();
+    }
+
+    // 현재 여기는 null체크가 제대로 안되어있다.(내가 임의로 작성해봄 )
+    // 이와같이 합성할 수 있다는 것이 장점
+    private BooleanExpression ageBetween(int ageLoe, int ageGoe){
+        if (ageGoe(ageGoe) == null) {
+            return ageLoe(ageLoe);
+        }
+        if (ageLoe(ageLoe) == null) {
+            return ageGoe(ageGoe);
+        }
+        return ageGoe(ageGoe).and(ageLoe(ageLoe));
+    }
 }
