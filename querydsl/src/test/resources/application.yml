@@ -1,6 +1,6 @@
 spring:
   profiles:
-    active: local
+    active: test
   datasource:
     url: jdbc:h2:tcp://localhost/~/querydsl #이거를 h2 console에 입력하면서 들어가면 확인가능
     username: sa

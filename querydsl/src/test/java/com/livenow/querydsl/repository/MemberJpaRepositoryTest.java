@@ -2,7 +2,7 @@ package com.livenow.querydsl.repository;
 
 import com.livenow.querydsl.domain.Member;
 import com.livenow.querydsl.domain.Team;
-import com.livenow.querydsl.dto.MemberSearchCondition;
+import com.livenow.querydsl.controller.MemberSearchCondition;
 import com.livenow.querydsl.dto.MemberTeamDto;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,4 +1,4 @@
-package com.livenow.querydsl.dto;
+package com.livenow.querydsl.controller;
 
 import lombok.Data;
 

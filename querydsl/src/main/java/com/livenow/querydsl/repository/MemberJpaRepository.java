@@ -1,11 +1,10 @@
 package com.livenow.querydsl.repository;
 
 import com.livenow.querydsl.domain.Member;
-import com.livenow.querydsl.dto.MemberSearchCondition;
+import com.livenow.querydsl.controller.MemberSearchCondition;
 import com.livenow.querydsl.dto.MemberTeamDto;
 import com.livenow.querydsl.dto.QMemberTeamDto;
 import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.springframework.stereotype.Repository;
