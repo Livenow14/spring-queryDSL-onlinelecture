@@ -1,14 +1,17 @@
 package com.livenow.querydsl.repository;
 
 import com.livenow.querydsl.controller.MemberSearchCondition;
+import com.livenow.querydsl.domain.Member;
 import com.livenow.querydsl.dto.MemberTeamDto;
 import com.livenow.querydsl.dto.QMemberTeamDto;
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.repository.support.PageableExecutionUtils;
 import org.springframework.util.StringUtils;
 
 import javax.persistence.EntityManager;
@@ -71,7 +74,7 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
         /**
          * fetchResult를 하면 쿼리가
          * count 쿼리랑, data쿼리가 둘다 나감
-         * orderby도 가능함
+         * fetchResult() 는 카운트 쿼리 실행시 필요없는 order by 는 제거한다.
          */
 
         List<MemberTeamDto> content = results.getResults();
@@ -113,6 +116,44 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
                 .fetchCount();
         return new PageImpl<>(content, pageable, total);
 
+    }
+
+    /**
+     * CountQuery 최적화
+     * 스프링 데이터 라이브러리가 제공
+     * count 쿼리가 생략 가능한 경우 생략해서 처리
+     * 페이지 시작이면서 컨텐츠 사이즈가 페이지 사이즈보다 작을 때
+     * 마지막 페이지 일 때 (offset + 컨텐츠 사이즈를 더해서 전체 사이즈 구함)
+     */
+    @Override
+    public Page<MemberTeamDto> searchPage(MemberSearchCondition condition, Pageable pageable) {
+        List<MemberTeamDto> content = queryFactory
+                .select(new QMemberTeamDto(
+                        member.id.as("memberId"),
+                        member.username,
+                        member.age,
+                        team.id.as("teamId"),
+                        team.name.as("teamName")
+                ))
+                .from(member)
+                .leftJoin(member.team, team)
+                .where(usernameEq(condition.getUsername()),
+                        teamNameEq(condition.getTeamName()),
+                        ageGoe(condition.getAgeGoe()),
+                        ageLoe(condition.getAgeLoe()))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        JPAQuery<Member> countQuery = queryFactory
+                .selectFrom(member)
+                .leftJoin(member.team, team)
+                .where(usernameEq(condition.getUsername()),
+                        teamNameEq(condition.getTeamName()),
+                        ageGoe(condition.getAgeGoe()),
+                        ageLoe(condition.getAgeLoe()));
+
+        return PageableExecutionUtils.getPage(content, pageable, () -> countQuery.fetchCount());
     }
 
     /**
