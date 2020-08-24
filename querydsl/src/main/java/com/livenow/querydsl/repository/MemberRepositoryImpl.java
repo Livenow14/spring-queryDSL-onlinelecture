@@ -29,7 +29,7 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
     }
 
     @Override
-    public List<MemberTeamDto> search(MemberSearchCondition condition){
+    public List<MemberTeamDto> search(MemberSearchCondition condition) {
         return queryFactory
                 .select(new QMemberTeamDto(
                         member.id.as("memberId"),
@@ -83,7 +83,7 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
     }
 
     /**
-     *데이터 내용과 전체 카운트를 별도로 조회하는 방법
+     * 데이터 내용과 전체 카운트를 별도로 조회하는 방법
      * 데이터가 많이 없으면 너무 고민하지 않아도 된다.
      */
     @Override
@@ -185,7 +185,7 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
     }
 
     private BooleanExpression teamNameEq(String teamName) {
-        return StringUtils.hasText(teamName) ? team.name.eq(teamName): null;
+        return StringUtils.hasText(teamName) ? team.name.eq(teamName) : null;
     }
 
     private BooleanExpression ageGoe(Integer ageGoe) {
@@ -196,6 +196,21 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
     private BooleanExpression ageLoe(Integer ageLoe) {
         return ageLoe != null ? member.age.loe(ageLoe) : null;
     }
+
+    /**
+     * 리포지토리 지원 - QuerydslRepositorySupport
+     * QuerydslRepositorySupport
+     * 장점
+     * getQuerydsl().applyPagination() 스프링 데이터가 제공하는 페이징을 Querydsl로 편리하게 변환
+     * 가능(단! Sort는 오류발생)
+     * from() 으로 시작 가능(최근에는 QueryFactory를 사용해서 select() 로 시작하는 것이 더 명시적)
+     * EntityManager 제공한계
+     * Querydsl 3.x 버전을 대상으로 만듬
+     * Querydsl 4.x에 나온 JPAQueryFactory로 시작할 수 없음
+     * select로 시작할 수 없음 (from으로 시작해야함)
+     * QueryFactory 를 제공하지 않음
+     * 스프링 데이터 Sort 기능이 정상 동작하지 않음
+     */
 
 
 }
